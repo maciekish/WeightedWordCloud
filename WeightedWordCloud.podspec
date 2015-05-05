@@ -7,7 +7,7 @@ Pod::Spec.new do |s|
                        No dependencies, works with app extensions and the Apple Watch (WatchKit).
                        DESC
   s.homepage         = "https://github.com/maciekish/WeightedWordCloud"
-  s.screenshots      = "raw.githubusercontent.com/maciekish/WeightedWordCloud/master/Screenshot.png"
+  s.screenshots      = "https://raw.githubusercontent.com/maciekish/WeightedWordCloud/master/Screenshot.png"
   s.license          = 'MIT'
   s.author           = { "Maciej Swic" => "maciej@swic.name" }
   s.source           = { :git => "https://github.com/maciekish/WeightedWordCloud.git", :tag => s.version.to_s }
