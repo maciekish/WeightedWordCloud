@@ -20,6 +20,11 @@
 
 #import <Foundation/Foundation.h>
 
+typedef NS_ENUM(NSUInteger, HITWeightedWordCloudOrigin) {
+    HITWeightedWordCloudOriginRandom,
+    HITWeightedWordCloudOriginTopLeft
+};
+
 @interface HITWeightedWordCloud : NSObject
 
 /**
@@ -31,6 +36,11 @@
  *  The size to render.
  */
 @property (nonatomic) CGSize size;
+
+/**
+ *  The background color. Defaults to UIColor.clearColor.
+ */
+@property (nonatomic, copy) UIColor *backgroundColor;
 
 /**
  *  Text color.
@@ -48,6 +58,11 @@
 @property (nonatomic) CGFloat maxFontSize;
 
 /**
+ *  The origin for the words.
+ */
+@property (nonatomic) HITWeightedWordCloudOrigin origin;
+
+/**
  *  Init
  *
  *  @param size The size of the word cloud.
@@ -55,6 +70,15 @@
  *  @return A HITWordCloud.
  */
 - (instancetype)initWithSize:(CGSize)size;
+
+/**
+ *  Calculates the minimum size for the given dictionary. Only works with HITWeightedWordCloudOriginTopLeft.
+ *
+ *  @param wordDictionary A dictionary with your words. The keys should be the words (NSString) and the values their weight (NSNumber).
+ *
+ *  @return A CGSize that will fit all the words.
+ */
+- (CGSize)minimumSizeWithWords:(NSDictionary *)wordDictionary;
 
 /**
  *  Renders a word cloud.

@@ -31,12 +31,27 @@
 
 @implementation HITWeightedWordCloud
 
+- (instancetype)init
+{
+    self = super.init;
+    
+    if (self) {
+        self.size = CGSizeZero;
+        self.backgroundColor = UIColor.clearColor;
+        self.minFontSize = UIFont.smallSystemFontSize * 0.6;
+        self.maxFontSize = UIFont.systemFontSize * 1.4;
+    }
+    
+    return self;
+}
+
 - (instancetype)initWithSize:(CGSize)size
 {
     self = super.init;
     
     if (self) {
         self.size = size;
+        self.backgroundColor = UIColor.clearColor;
         self.minFontSize = UIFont.smallSystemFontSize * 0.6;
         self.maxFontSize = UIFont.systemFontSize * 1.4;
     }
@@ -46,44 +61,51 @@
 
 #pragma mark - Image generation
 
+- (CGSize)minimumSizeWithWords:(NSDictionary *)wordDictionary
+{
+    NSAssert(self.origin != HITWeightedWordCloudOriginRandom, @"HITWeightedWordCloudOriginRandom is not supported for size calculation");
+    
+    CGRect minimumRect = CGRectZero;
+    self.wordFrames = NSMutableArray.new;
+    
+    // Sort words by weight. This prioritizes the rendering of the more important words.
+    NSArray *weighedWords = [self sortedKeysInDictionary:wordDictionary];
+    
+    for (NSString *word in weighedWords) {
+        CGRect wordFrame = [self frameForWord:word inDictionary:wordDictionary];
+        
+        if (!CGRectIsEmpty(wordFrame)) {
+            [self.wordFrames addObject:[NSValue valueWithCGRect:wordFrame]];
+            minimumRect = CGRectUnion(minimumRect, wordFrame);
+        }
+    }
+    
+    return minimumRect.size;
+}
+
 - (UIImage *)imageWithWords:(NSDictionary *)wordDictionary
 {
     self.wordFrames = NSMutableArray.new;
     
-    // Calculate minimum and maximum weight for font size mapping.
-    CGFloat minWeight = [[wordDictionary.allValues valueForKeyPath:@"@min.self"] floatValue], maxWeight = [[wordDictionary.allValues valueForKeyPath:@"@max.self"] floatValue];
-    
     // Sort words by weight. This prioritizes the rendering of the more important words.
-    NSArray *weighedWords = [wordDictionary keysSortedByValueUsingComparator:^NSComparisonResult(id obj1, id obj2) {
-        return [obj2 compare:obj1];
-    }];
+    NSArray *weighedWords = [self sortedKeysInDictionary:wordDictionary];
     
     UIGraphicsBeginImageContextWithOptions(CGSizeMake(self.size.width, self.size.height), NO, self.scale);
     
+    // Background fill
+    if (CGColorGetAlpha(self.backgroundColor.CGColor) > 0) {
+        [self.backgroundColor setFill];
+        CGContextFillRect(UIGraphicsGetCurrentContext(), CGRectMake(0, 0, self.size.width, self.size.height));
+    }
+    
     // Draw each word
     for (NSString *word in weighedWords) {
-        CGRect wordFrame;
-        
-        // Map weight to font size
-        int weightRange = maxWeight - minWeight;
-        int fontSizeRange = self.maxFontSize - self.minFontSize;
-        CGFloat weighedFontSize = ([wordDictionary[word] floatValue] - maxWeight) * fontSizeRange / weightRange + self.maxFontSize;
-        
-        // Font size and color
-        NSDictionary *attributes = @{NSFontAttributeName: [UIFont systemFontOfSize:weighedFontSize], NSForegroundColorAttributeName: self.textColor};
-        
-        // Try to position the word so that it does not intersect other words. Random positions are used for kMaxPositioningRetries. After kMaxPositioningRetries is reached, we give up and drop this word as it probably doesn't fit.
-        NSUInteger retries = 0;
-        
-        while ([self frameIntersectsOtherWords:wordFrame] && retries < kMaxPositioningRetries) {
-            wordFrame = [self randomFrameForText:word withAttributes:attributes inContext:UIGraphicsGetCurrentContext()];
-            retries++;
-        };
+        CGRect wordFrame = [self frameForWord:word inDictionary:wordDictionary];
         
         // If the word fit, save its frame for future intersection testing and render the word.
-        if (retries < kMaxPositioningRetries) {
+        if (!CGRectIsEmpty(wordFrame)) {
             [self.wordFrames addObject:[NSValue valueWithCGRect:wordFrame]];
-            [word drawInRect:wordFrame withAttributes:attributes];
+            [word drawInRect:wordFrame withAttributes:[self fontAttribuesForWord:word inDictionary:wordDictionary]];
         }
     }
     
@@ -93,6 +115,51 @@
     UIGraphicsEndImageContext();
     
     return image;
+}
+
+- (CGRect)frameForWord:(NSString *)word inDictionary:(NSDictionary *)wordDictionary
+{
+    CGRect wordFrame;
+    
+    NSDictionary *fontAttributes = [self fontAttribuesForWord:word inDictionary:wordDictionary];
+    
+    // Try to position the word so that it does not intersect other words. Random positions are used for kMaxPositioningRetries. After kMaxPositioningRetries is reached, we give up and drop this word as it probably doesn't fit.
+    NSUInteger retries = 0;
+    
+    do {
+        switch (self.origin) {
+            case HITWeightedWordCloudOriginRandom:
+                wordFrame = [self randomFrameForText:word withAttributes:fontAttributes inContext:UIGraphicsGetCurrentContext()];
+                break;
+            case HITWeightedWordCloudOriginTopLeft:
+                wordFrame = [self topLeftFrameForText:word withAttributes:fontAttributes];
+                break;
+        }
+        retries++;
+    } while ([self frameIntersectsOtherWords:wordFrame] && retries < kMaxPositioningRetries);
+    
+    // If the word fit, return the frame.
+    if (retries < kMaxPositioningRetries) {
+        return wordFrame;
+    } else {
+        return CGRectNull;
+    }
+}
+
+- (NSDictionary *)fontAttribuesForWord:(NSString *)word inDictionary:(NSDictionary *)wordDictionary
+{
+    // Calculate minimum and maximum weight for font size mapping.
+    CGFloat minWeight = [[wordDictionary.allValues valueForKeyPath:@"@min.self"] floatValue], maxWeight = [[wordDictionary.allValues valueForKeyPath:@"@max.self"] floatValue];
+    
+    // Map weight to font size
+    int weightRange = maxWeight - minWeight;
+    int fontSizeRange = self.maxFontSize - self.minFontSize;
+    CGFloat weighedFontSize = ([wordDictionary[word] floatValue] - maxWeight) * fontSizeRange / weightRange + self.maxFontSize;
+    
+    // Font size and color
+    NSDictionary *attributes = @{NSFontAttributeName: [UIFont systemFontOfSize:weighedFontSize], NSForegroundColorAttributeName: self.textColor};
+    
+    return attributes;
 }
 
 #pragma mark - Positioning
@@ -118,6 +185,27 @@
 }
 
 /**
+ *  Creates a top-left frame for the supplied text.
+ *
+ *  @param text       The text to create a frame for.
+ *  @param attributes Text attributes like font size etc.
+ *
+ *  @return <#return value description#>
+ */
+- (CGRect)topLeftFrameForText:(NSString *)text withAttributes:(NSDictionary *)attributes
+{
+    CGRect lastFrame = [self.wordFrames.lastObject CGRectValue];
+    
+    CGSize textSize = [text sizeWithAttributes:attributes];
+    
+    CGRect topLeftFrame = CGRectMake(0, CGRectGetMaxY(lastFrame), textSize.width, textSize.height);
+    
+    lastFrame = CGRectMake(CGRectGetMinX(lastFrame), CGRectGetMinY(lastFrame) + 2.0, CGRectGetWidth(lastFrame), CGRectGetHeight(lastFrame));
+    
+    return topLeftFrame;
+}
+
+/**
  *  Checks if a frame intersects any other word rect in self.wordFrames.
  *
  *  @param frame The frame to be tested.
@@ -135,6 +223,15 @@
     }
     
     return NO;
+}
+
+#pragma mark - Helpers
+
+- (NSArray *)sortedKeysInDictionary:(NSDictionary *)wordDictionary
+{
+    return [wordDictionary keysSortedByValueUsingComparator:^NSComparisonResult(id obj1, id obj2) {
+        return [obj2 compare:obj1];
+    }];
 }
 
 @end
