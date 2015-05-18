@@ -80,7 +80,7 @@
         }
     }
     
-    return minimumRect.size;
+    return CGSizeMake(ceil(minimumRect.size.width), ceil(minimumRect.size.height));
 }
 
 - (UIImage *)imageWithWords:(NSDictionary *)wordDictionary
