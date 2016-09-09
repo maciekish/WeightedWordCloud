@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C16C07F01D82B77900405B61"
-               BuildableName = "WeightedWordCloud watchOS.framework"
+               BuildableName = "WeightedWordCloud.framework"
                BlueprintName = "WeightedWordCloud watchOS"
                ReferencedContainer = "container:WeightedWordCloud.xcodeproj">
             </BuildableReference>
@@ -46,7 +46,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C16C07F01D82B77900405B61"
-            BuildableName = "WeightedWordCloud watchOS.framework"
+            BuildableName = "WeightedWordCloud.framework"
             BlueprintName = "WeightedWordCloud watchOS"
             ReferencedContainer = "container:WeightedWordCloud.xcodeproj">
          </BuildableReference>
@@ -64,7 +64,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C16C07F01D82B77900405B61"
-            BuildableName = "WeightedWordCloud watchOS.framework"
+            BuildableName = "WeightedWordCloud.framework"
             BlueprintName = "WeightedWordCloud watchOS"
             ReferencedContainer = "container:WeightedWordCloud.xcodeproj">
          </BuildableReference>

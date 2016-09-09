@@ -18,7 +18,12 @@
 //  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 //  DEALINGS IN THE SOFTWARE.
 
-@import WatchKit;
+#ifndef EXTENSION_TARGET
+    @import UIKit;
+#else
+    @import WatchKit;
+#endif
+
 #import "HITWeightedWordCloud.h"
 
 #define kMaxPositioningRetries 100
@@ -38,8 +43,8 @@
     if (self) {
         self.size = CGSizeZero;
         self.backgroundColor = UIColor.clearColor;
-        self.minFontSize = UIFont.smallSystemFontSize * 0.6;
-        self.maxFontSize = UIFont.systemFontSize * 1.4;
+        self.minFontSize = self.smallSystemFontSize * 0.6;
+        self.maxFontSize = self.systemFontSize * 1.4;
     }
     
     return self;
@@ -52,8 +57,8 @@
     if (self) {
         self.size = size;
         self.backgroundColor = UIColor.clearColor;
-        self.minFontSize = UIFont.smallSystemFontSize * 0.6;
-        self.maxFontSize = UIFont.systemFontSize * 1.4;
+        self.minFontSize = self.smallSystemFontSize * 0.6;
+        self.maxFontSize = self.systemFontSize * 1.4;
     }
     
     return self;
@@ -190,7 +195,7 @@
  *  @param text       The text to create a frame for.
  *  @param attributes Text attributes like font size etc.
  *
- *  @return <#return value description#>
+ *  @return The top left frame for the supplied text.
  */
 - (CGRect)topLeftFrameForText:(NSString *)text withAttributes:(NSDictionary *)attributes
 {
@@ -208,7 +213,7 @@
 /**
  *  Checks if a frame intersects any other word rect in self.wordFrames.
  *
- *  @param frame The frame to be tested.
+ *  @param rect The frame to be tested.
  *
  *  @return Whether the input frame interescts any rect in self.wordFrames.
  */
@@ -232,6 +237,24 @@
     return [wordDictionary keysSortedByValueUsingComparator:^NSComparisonResult(id obj1, id obj2) {
         return [obj2 compare:obj1];
     }];
+}
+
+- (CGFloat)systemFontSize
+{
+    #ifndef EXTENSION_TARGET
+        return UIFont.systemFontSize;
+    #else
+        return 17;
+    #endif
+}
+
+- (CGFloat)smallSystemFontSize
+{
+    #ifndef EXTENSION_TARGET
+        return UIFont.smallSystemFontSize;
+    #else
+        return 12;
+    #endif
 }
 
 @end
