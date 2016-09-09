@@ -6,7 +6,7 @@
 //  Copyright © 2016 Appulize. All rights reserved.
 //
 
-#import <UIKit/UIKit.h>
+@import Foundation;
 
 //! Project version number for WeightedWordCloud.
 FOUNDATION_EXPORT double WeightedWordCloudVersionNumber;
@@ -16,4 +16,4 @@ FOUNDATION_EXPORT const unsigned char WeightedWordCloudVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <WeightedWordCloud/PublicHeader.h>
 
-
+#import <WeightedWordCloud/HITWeightedWordCloud.h>
